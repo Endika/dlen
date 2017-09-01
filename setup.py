@@ -13,6 +13,7 @@ DESCRIPTION = 'Dlen checks the length of the functions. '
 URL = 'https://github.com/Endika/dlen'
 EMAIL = 'me@endikaiglesias.com'
 AUTHOR = 'Endika Iglesias'
+KEYWORDS = 'Refactor, Python, Python2, Python3, Refactoring, def, class, Clean'
 
 REQUIRED = []
 
@@ -78,11 +79,15 @@ setup(
     },
     install_requires=REQUIRED,
     include_package_data=True,
-    license='ISC',
+    license='MIT',
+    keywords=KEYWORDS,
     classifiers=[
-        'License :: OSI Approved :: ISC License',
+        'Development Status :: 6 - Mature',
+        'Intended Audience :: Developers',
+        'Natural Language :: English',
+        'Environment :: Console',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
@@ -90,7 +95,9 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: Implementation :: CPython',
-        'Programming Language :: Python :: Implementation :: PyPy'
+        'Programming Language :: Python :: Implementation :: PyPy',
+        'Topic :: Software Development :: Libraries',
+        'Topic :: Utilities'
     ],
     cmdclass={
         'publish': PublishCommand,
