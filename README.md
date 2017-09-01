@@ -3,6 +3,11 @@ dlen
 
 dlen for a world with less code.
 
+Check the length of the method (maximum 20 lines) and
+the class (maximum 500 lines). To keep your code clean and clear
+you should always try to avoid having too many lines of code.
+Also recommended to use pep8, isort, pydocstyle pack.
+
 Getting Started
 ===============
 
