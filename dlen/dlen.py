@@ -8,41 +8,73 @@ import re
 class DefLen(object):
     """Def count lines."""
 
-    def_name = None
+    function_name = None
+    class_name = None
+    class_count = 0
     count = 0
-    def_tab = 0
+    function_tab = 0
+    class_tab = 0
+    class_blank_lines = 2
     blank_lines = 2
-    warn_line_per_def = 12
-    error_line_per_def = 20
+    warn_line_per_function = 12
+    error_line_per_function = 20
+    error_line_per_class = 500
     line = ''
     filename = ''
 
     def _print_def_resume(self):
-        number = self.warn_line_per_def
-        if self.def_name and self.count > number:
+        number = self.warn_line_per_function
+        if self.function_name and self.count > number:
             status = 'WARN'
-            if self.count > self.error_line_per_def:
-                number = self.error_line_per_def
+            if self.count > self.error_line_per_function:
+                number = self.error_line_per_function
                 status = 'ERROR'
             print('[{}] \'{}\' {} function too long ({} > {} lines)'.format(
-                status, self.filename, self.def_name, self.count, number))
+                status, self.filename, self.function_name, self.count, number))
 
-    def _reset_count(self):
-        self.def_name = None
-        self.count = 0
-        self.blank_lines = 2
+    def _print_class_resume(self):
+        number = self.error_line_per_class
+        if self.class_name and self.class_count > number:
+            status = 'ERROR'
+            print('[{}] \'{}\' {} class too long ({} > {} lines)'.format(
+                status, self.filename, self.class_name, self.class_name,
+                number))
 
-    def detect_def(self):
+    def _reset_count(self, function=True):
+        if function:
+            self.function_name = None
+            self.count = 0
+            self.blank_lines = 2
+        else:
+            self.class_name = None
+            self.class_count = 0
+            self.class_blank_lines = 2
+
+    def detect_function(self):
         """Detect def."""
         result_lts = re.findall(re.compile(br'def(.*?)\('), self.line)
         if ((result_lts) or
-                (self.def_name and self.blank_lines == 0)):
+                (self.function_name and self.blank_lines == 0)):
             self._print_def_resume()
             self._reset_count()
             if 'def' in self.line:
-                self.def_tab = self.line.index('def')
+                self.function_tab = self.line.index('def')
                 if result_lts:
-                    self.def_name = result_lts[0].strip()
+                    self.function_name = result_lts[0].strip()
+                return True
+        return False
+
+    def detect_class(self):
+        """Detect def."""
+        result_lts = re.findall(re.compile(br'class(.*?)\('), self.line)
+        if ((result_lts) or
+                (self.class_name and self.class_blank_lines == 0)):
+            self._print_class_resume()
+            self._reset_count(function=False)
+            if 'class' in self.line:
+                self.class_tab = self.line.index('class')
+                if result_lts:
+                    self.class_name = result_lts[0].strip()
                 return True
         return False
 
@@ -79,6 +111,24 @@ class DefLen(object):
                 file_lts.append(path)
         return file_lts
 
+    def check_function(self, current_tab):
+        """Check function."""
+        if not self.detect_function():
+            if self.function_tab < current_tab:
+                self.count += 1
+                self.blank_lines = 2
+            elif self.function_name:
+                self.blank_lines -= 1
+
+    def check_class(self, current_tab):
+        """Check class."""
+        if not self.detect_class():
+            if self.class_tab < current_tab:
+                self.class_count += 1
+                self.class_blank_lines = 2
+            elif self.class_name:
+                self.class_blank_lines -= 1
+
     def __init__(self):
         """Init."""
         data = self.create_parser()
@@ -88,12 +138,8 @@ class DefLen(object):
                 for line_number, line in enumerate(f, 1):
                     self.line = line
                     current_tab = self.get_current_tab()
-                    if not self.detect_def():
-                        if self.def_tab < current_tab:
-                            self.count += 1
-                            self.blank_lines = 2
-                        elif self.def_name:
-                            self.blank_lines -= 1
+                    self.check_function(current_tab)
+                    self.check_class(current_tab)
 
 
 def main():

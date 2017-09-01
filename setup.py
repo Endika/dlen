@@ -6,7 +6,7 @@ import os
 import sys
 from shutil import rmtree
 
-from setuptools import find_packages, setup, Command
+from setuptools import Command, find_packages, setup
 
 NAME = 'dlen'
 DESCRIPTION = 'Dlen checks the length of the functions. '
@@ -61,6 +61,7 @@ class PublishCommand(Command):
         os.system('twine upload dist/*')
 
         sys.exit()
+
 
 setup(
     name=NAME,
