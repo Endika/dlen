@@ -146,13 +146,12 @@ class DefLen(object):
         self.check_function(current_tab)
         self.check_class(current_tab)
 
-    def __init__(self, files_content=None):
-        """Init."""
-        if files_content:
-            for file_txt in files_content:
-                for line in file_txt.split('\n'):
-                    self.process_line(line)
-            return
+    def _run_import_mode(self, files_content):
+        for file_txt in files_content:
+            for line in file_txt.split('\n'):
+                self.process_line(line)
+
+    def _run_cli_mode(self, files_content):
         self.show_console = True
         data = self.create_parser()
         for file in self.iter_source_code(data['files']):
@@ -160,6 +159,13 @@ class DefLen(object):
             with io.open(file, 'rb') as f:
                 for line_number, line in enumerate(f, 1):
                     self.process_line(line)
+
+    def __init__(self, files_content=None):
+        """Init."""
+        if files_content:
+            self._run_import_mode(files_content)
+        else:
+            self._run_cli_mode(files_content)
 
 
 def main():
