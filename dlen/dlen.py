@@ -21,6 +21,19 @@ class DefLen(object):
     error_line_per_class = 500
     line = ''
     filename = ''
+    output = []
+    show_console = False
+
+    def _process_print(self, status, number, function=True):
+        type_msg = 'function' if function else 'class'
+        name_msg = self.function_name if function else self.class_name
+        count = self.count if function else self.class_count
+        filename = ' \'{}\''.format(self.filename) if self.filename else ''
+        msg = '[{}]{} {} {} too long ({} > {} lines)'.format(
+            status, filename, name_msg, type_msg, count, number)
+        self.output.append(msg)
+        if self.show_console:
+            print(msg)
 
     def _print_def_resume(self):
         number = self.warn_line_per_function
@@ -29,16 +42,13 @@ class DefLen(object):
             if self.count > self.error_line_per_function:
                 number = self.error_line_per_function
                 status = 'ERROR'
-            print('[{}] \'{}\' {} function too long ({} > {} lines)'.format(
-                status, self.filename, self.function_name, self.count, number))
+            self._process_print(status, number)
 
     def _print_class_resume(self):
         number = self.error_line_per_class
         if self.class_name and self.class_count > number:
             status = 'ERROR'
-            print('[{}] \'{}\' {} class too long ({} > {} lines)'.format(
-                status, self.filename, self.class_name, self.class_name,
-                number))
+            self._process_print(status, number, function=False)
 
     def _reset_count(self, function=True):
         if function:
@@ -129,19 +139,29 @@ class DefLen(object):
             elif self.class_name:
                 self.class_blank_lines -= 1
 
-    def __init__(self):
+    def process_line(self, line):
+        """Process line."""
+        self.line = line
+        current_tab = self.get_current_tab()
+        self.check_function(current_tab)
+        self.check_class(current_tab)
+
+    def __init__(self, files_content=None):
         """Init."""
+        if files_content:
+            for file_txt in files_content:
+                for line in file_txt.split('\n'):
+                    self.process_line(line)
+            return
+        self.show_console = True
         data = self.create_parser()
         for file in self.iter_source_code(data['files']):
             self.filename = file
             with io.open(file, 'rb') as f:
                 for line_number, line in enumerate(f, 1):
-                    self.line = line
-                    current_tab = self.get_current_tab()
-                    self.check_function(current_tab)
-                    self.check_class(current_tab)
+                    self.process_line(line)
 
 
 def main():
     """Run in command line."""
-    DefLen()
+    return DefLen()
