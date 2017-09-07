@@ -3,7 +3,7 @@ import dlen.dlen as dlen
 
 def test_blank_console():
     """Test blank in command line."""
-    assert dlen.main().show_console is True
+    assert dlen.main() is None
 
 
 def test_blank():

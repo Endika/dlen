@@ -170,4 +170,4 @@ class DefLen(object):
 
 def main():
     """Run in command line."""
-    return DefLen()
+    DefLen()
