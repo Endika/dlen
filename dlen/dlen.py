@@ -141,7 +141,7 @@ class DefLen(object):
 
     def process_line(self, line):
         """Process line."""
-        self.line = line
+        self.line = str(line)  # Patch to work on py3 and py2
         current_tab = self.get_current_tab()
         self.check_function(current_tab)
         self.check_class(current_tab)
