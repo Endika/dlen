@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  please:
+    name: release-please
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      released: ${{ steps.release.outputs.release_created }}
+      tag: ${{ steps.release.outputs.tag_name }}
+    steps:
+      # Manifest mode — release-please-config.json and .release-please-manifest.json —
+      # so `extra-files` can bump uv.lock as well. The lockfile carries the version too,
+      # and a release that moves one and not the other leaves it dirty in every checkout.
+      - uses: googleapis/release-please-action@v5
+        id: release
+        with:
+          # With GITHUB_TOKEN the release pull request is authored by the bot, and
+          # GitHub fires no `pull_request` workflows for it — the required checks
+          # sit at "action_required" forever and auto-merge can never proceed.
+          # A PAT makes the pull request yours, so CI runs on it normally.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: publish to PyPI
+    needs: please
+    if: needs.please.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/dlen
+    permissions:
+      id-token: write # trusted publishing; no API token is stored anywhere
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.please.outputs.tag }}
+      - uses: astral-sh/setup-uv@v7
+      - run: uv build
+      - uses: pypa/gh-action-pypi-publish@release/v1
