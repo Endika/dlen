@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.0](https://github.com/Endika/dlen/compare/v0.1.0...v0.2.0) (2026-09-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* set the function defaults from measured code instead of 2017 folklore
+
+### Features
+
+* set the function defaults from measured code instead of 2017 folklore ([08b5a50](https://github.com/Endika/dlen/commit/08b5a50362539588c18ae86128e9f02328125e32))
+
 ## [0.1.0](https://github.com/Endika/dlen/compare/v0.0.2...v0.1.0) (2026-09-17)
 
 
