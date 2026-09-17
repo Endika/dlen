@@ -27,18 +27,25 @@ class Code(str, Enum):
 class Limits:
     """The three thresholds.
 
-    The function defaults come from measuring 29,000 functions across the Python
-    standard library, numpy, Pillow, rich, pytest, httpx, mypy and coverage. Their
-    median function is 7 to 14 lines, but the tail is long: a limit of 20 would flag
-    16% of the standard library and 27% of rich, which is a wall nobody climbs. At 50
-    — the same number pylint and ruff use for statements — you flag about 5%, which is
-    a list you can actually work through.
+    Measured over 28,390 functions in the Python standard library, numpy, Pillow,
+    rich, pytest, httpx, mypy and coverage. Counting the way `_span` does — no
+    docstrings, no blank lines — the median function out there is 5 lines, and:
+
+        over 20 lines: 14.6%    over 30: 8.3%    over 50: 3.6%
+        over 25 lines: 10.8%    over 40: 5.3%
+
+    `max_function` is set where it flags about 5% of a typical codebase, which is a
+    list you can work through. `warn_function` sits at roughly 10%, close enough to
+    notice before it becomes a problem.
 
     For the stricter Clean Code reading, pass `--warn-function 12 --max-function 20`.
+
+    `max_class` stays at the value dlen shipped in 2017: it flags 2.2% of classes,
+    and a class that long really is a god object.
     """
 
-    warn_function: int = 30
-    max_function: int = 50
+    warn_function: int = 25
+    max_function: int = 40
     max_class: int = 500
 
 
@@ -56,11 +63,32 @@ Definition = ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef
 Function = ast.FunctionDef | ast.AsyncFunctionDef
 
 
-def _span(node: Definition) -> int:
-    """Lines the node covers, decorators included — they are part of what you read."""
+def _docstring_lines(node: Definition) -> range:
+    """The lines the node's own docstring occupies, if it has one.
+
+    A parsed definition always has at least one statement, so there is no empty
+    body to guard against. A first statement that is a bare number, though, is not
+    a docstring — `42` on its own line is code, however useless.
+    """
+    first = node.body[0]
+    if not isinstance(first, ast.Expr) or not isinstance(first.value, ast.Constant):
+        return range(0)
+    if not isinstance(first.value.value, str):
+        return range(0)
+    return range(first.lineno, (first.end_lineno or first.lineno) + 1)
+
+
+def _span(node: Definition, lines: list[str]) -> int:
+    """Lines you actually have to read.
+
+    Decorators count — they are part of what you read before you understand the
+    function. Blank lines and the node's own docstring do not: penalising a long
+    docstring would be telling you to document less, which is the wrong lesson.
+    """
     start = min([node.lineno, *(d.lineno for d in node.decorator_list)])
     end = node.end_lineno if node.end_lineno is not None else node.lineno
-    return end - start + 1
+    skip = _docstring_lines(node)
+    return sum(1 for n in range(start, end + 1) if n not in skip and lines[n - 1].strip())
 
 
 def _finding(node: Definition, path: Path, code: Code, level: Level, text: str) -> Finding:
@@ -72,8 +100,8 @@ def _describe(kind: str, name: str, length: int, limit: int, level: Level) -> st
     return f"{kind} {name!r} is {length} lines ({threshold} {limit})"
 
 
-def _check_function(node: Function, path: Path, limits: Limits) -> Finding | None:
-    length = _span(node)
+def _check_function(node: Function, path: Path, limits: Limits, lines: list[str]) -> Finding | None:
+    length = _span(node, lines)
     if length > limits.max_function:
         level, limit = Level.ERROR, limits.max_function
     elif length > limits.warn_function:
@@ -84,8 +112,10 @@ def _check_function(node: Function, path: Path, limits: Limits) -> Finding | Non
     return _finding(node, path, Code.FUNCTION_TOO_LONG, level, text)
 
 
-def _check_class(node: ast.ClassDef, path: Path, limits: Limits) -> Finding | None:
-    length = _span(node)
+def _check_class(
+    node: ast.ClassDef, path: Path, limits: Limits, lines: list[str]
+) -> Finding | None:
+    length = _span(node, lines)
     if length <= limits.max_class:
         return None
     text = _describe("class", node.name, length, limits.max_class, Level.ERROR)
@@ -105,12 +135,13 @@ def check_source(source: str, path: Path, limits: Limits) -> list[Finding]:
     except SyntaxError as exc:
         return [_syntax_finding(exc, path)]
 
+    lines = source.splitlines()
     findings = []
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef):
-            found = _check_class(node, path, limits)
+            found = _check_class(node, path, limits, lines)
         elif isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
-            found = _check_function(node, path, limits)
+            found = _check_function(node, path, limits, lines)
         else:
             continue
         if found is not None:
