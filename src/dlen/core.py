@@ -25,10 +25,20 @@ class Code(str, Enum):
 
 @dataclass(frozen=True, slots=True)
 class Limits:
-    """The three thresholds, defaulting to the ones dlen has used since 2017."""
+    """The three thresholds.
 
-    warn_function: int = 12
-    max_function: int = 20
+    The function defaults come from measuring 29,000 functions across the Python
+    standard library, numpy, Pillow, rich, pytest, httpx, mypy and coverage. Their
+    median function is 7 to 14 lines, but the tail is long: a limit of 20 would flag
+    16% of the standard library and 27% of rich, which is a wall nobody climbs. At 50
+    — the same number pylint and ruff use for statements — you flag about 5%, which is
+    a list you can actually work through.
+
+    For the stricter Clean Code reading, pass `--warn-function 12 --max-function 20`.
+    """
+
+    warn_function: int = 30
+    max_function: int = 50
     max_class: int = 500
 
 
