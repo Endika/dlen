@@ -171,19 +171,54 @@ class TestTheDefaults:
     """The defaults are a claim about real code, so they get their own test."""
 
     def test_they_are_the_measured_ones_not_the_2017_ones(self) -> None:
-        assert (Limits().warn_function, Limits().max_function) == (30, 50)
+        assert (Limits().warn_function, Limits().max_function) == (25, 40)
         assert Limits().max_class == 500
 
-    def test_a_forty_line_function_only_warns(self) -> None:
-        (finding,) = check_source(f"def forty():\n{body(40)}", HERE, Limits())
+    def test_a_thirty_line_function_only_warns(self) -> None:
+        (finding,) = check_source(f"def thirty():\n{body(30)}", HERE, Limits())
 
         assert finding.level is Level.WARNING
 
-    def test_a_sixty_line_function_is_an_error(self) -> None:
-        (finding,) = check_source(f"def sixty():\n{body(60)}", HERE, Limits())
+    def test_a_fifty_line_function_is_an_error(self) -> None:
+        (finding,) = check_source(f"def fifty():\n{body(50)}", HERE, Limits())
 
         assert finding.level is Level.ERROR
 
     def test_the_median_function_out_there_is_nowhere_near_the_limit(self) -> None:
-        """Median function length across the stdlib and seven big libraries is 7-14."""
-        assert check_source(f"def median_sized():\n{body(14)}", HERE, Limits()) == []
+        """Median function length across the stdlib and seven big libraries is 5."""
+        assert check_source(f"def median_sized():\n{body(5)}", HERE, Limits()) == []
+
+
+class TestWhatDoesNotCountAsLength:
+    """Counting docstrings made dlen punish you for documenting. It no longer does."""
+
+    def test_a_docstring_does_not_count(self) -> None:
+        documented = 'def documented():\n    """' + "\n".join(["doc"] * 60) + '"""\n    return 1\n'
+
+        assert check_source(documented, HERE, Limits()) == []
+
+    def test_blank_lines_do_not_count(self) -> None:
+        """41 lines on screen, 21 of them code: under the limit either way you count."""
+        airy = "def airy():\n" + "    x = 1\n\n" * 20
+
+        assert len(airy.splitlines()) == 41
+        assert check_source(airy, HERE, Limits()) == []
+
+    def test_but_real_code_still_counts(self) -> None:
+        packed = f'def packed():\n    """One line of doc."""\n{body(45)}'
+
+        (finding,) = check_source(packed, HERE, Limits())
+
+        assert finding.level is Level.ERROR
+
+    def test_a_class_docstring_does_not_count_either(self) -> None:
+        klass = 'class Documented:\n    """' + "\n".join(["doc"] * 600) + '"""\n    x = 1\n'
+
+        assert check_source(klass, HERE, Limits()) == []
+
+    def test_a_bare_number_first_is_not_a_docstring(self) -> None:
+        odd = f"def odd():\n    42\n{body(45)}"
+
+        (finding,) = check_source(odd, HERE, Limits())
+
+        assert finding.level is Level.ERROR

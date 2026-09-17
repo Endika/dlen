@@ -7,10 +7,12 @@ A long function is the cheapest smell to detect and the most reliable one to act
 
 ```console
 $ dlen src/
-src/importer.py:42:1: DL001 function 'process_batch' is 34 lines (max 20)
-src/importer.py:88:5: DL001 function 'validate' is 14 lines (warn 12)
+src/importer.py:42:1: DL001 function 'process_batch' is 61 lines (max 40)
+src/importer.py:88:5: DL001 function 'validate' is 28 lines (warn 25)
 src/models.py:7:1: DL002 class 'LegacyRecord' is 812 lines (max 500)
 ```
+
+It counts the code you have to read: not the docstring, not the blank lines.
 
 ## Install
 
@@ -30,40 +32,42 @@ dlen . --output-format=json      # for other tools
 
 | Flag | Default | Meaning |
 | --- | --- | --- |
-| `--warn-function N` | 30 | report a function above N lines, without failing |
-| `--max-function N` | 50 | fail on a function above N lines |
+| `--warn-function N` | 25 | report a function above N lines, without failing |
+| `--max-function N` | 40 | fail on a function above N lines |
 | `--max-class N` | 500 | fail on a class above N lines |
 | `--output-format` | `full` | `full`, `github` or `json` |
 
-A function's length includes its decorators — they are part of what you read before
-you understand it.
+### What counts as a line
+
+Decorators count — they are part of what you read before you understand the function.
+
+**Docstrings and blank lines do not.** Counting them meant punishing you for documenting:
+a well-written docstring pushed a short function over the limit. `rich.inspect` is 54
+lines on screen and 7 statements of code; flagging it was simply wrong.
+
+Comments do count. They are text you read to understand the code, not text that describes
+the interface.
 
 ### Where the defaults come from
 
-They were measured, not chosen. Across 29,000 functions in the Python standard library,
-numpy, Pillow, rich, pytest, httpx, mypy and coverage:
+They were measured, not chosen. Over 28,390 functions in the Python standard library,
+numpy, Pillow, rich, pytest, httpx, mypy and coverage, counted the way above:
 
-| | median | p75 | p90 | over 20 lines |
-| --- | --- | --- | --- | --- |
-| Python standard library | 7 | 14 | 30 | 16% |
-| mypy | 7 | 17 | 37 | 21% |
-| pytest | 9 | 18 | 34 | 22% |
-| httpx | 9 | 19 | 34 | 23% |
-| rich | 10 | 22 | 41 | 27% |
-| Pillow | 10 | 23 | 51 | 27% |
-| numpy | 14 | 46 | 82 | 43% |
+| lines | functions flagged |
+| --- | --- |
+| over 12 | 25.0% |
+| over 20 | 14.6% |
+| **over 25** | **10.8%** ← `--warn-function` |
+| over 30 | 8.3% |
+| **over 40** | **5.3%** ← `--max-function` |
+| over 50 | 3.6% |
 
-The median function out there is 7 to 14 lines, which is reassuring and remarkably stable
-across eight independent codebases. The tail is what a default has to answer to: a limit
-of 20 flags a sixth of the standard library and a quarter of rich. That is not a warning,
-it is a wall — and a tool that fires on a quarter of your code gets uninstalled on the
-first day.
+The median function out there is **5 lines**, and that holds across all eight codebases.
+`--max-function` sits where it flags about 5% — a list you can work through on a Tuesday —
+and `--warn-function` around 10%, close enough to notice before it becomes a problem.
 
-At 50 — the number `pylint` and `ruff` already use for statements — you flag around 5%.
-That is a list you can work through on a Tuesday.
-
-The class limit is a different story: 500 fires on about 1% of standard library classes,
-and when it fires it is right. It stays where it was.
+The class limit is the one number from 2017 the data supports: 500 flags 2.2% of classes,
+and a class that long really is a god object. It stays.
 
 If you want the stricter Clean Code reading, it is one flag away:
 
@@ -71,7 +75,8 @@ If you want the stricter Clean Code reading, it is one flag away:
 dlen src/ --warn-function 12 --max-function 20
 ```
 
-Versions before 0.2.0 shipped 12 and 20 as the defaults.
+Versions before 0.2.0 shipped 12 and 20. 0.3.0 stopped counting docstrings and blank
+lines, which made every function measure shorter, so the thresholds came down with it.
 
 ### Exit codes
 

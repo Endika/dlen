@@ -12,17 +12,17 @@ from dlen.cli import main
 
 @pytest.fixture
 def long_function(tmp_path: Path) -> Path:
-    """Over the default max of 50, so it is an error without passing any flag."""
+    """Over the default max of 40, so it is an error without passing any flag."""
     path = tmp_path / "long.py"
-    path.write_text("def long_one():\n" + "    x = 1\n" * 60, encoding="utf-8")
+    path.write_text("def long_one():\n" + "    x = 1\n" * 50, encoding="utf-8")
     return path
 
 
 @pytest.fixture
 def middling_function(tmp_path: Path) -> Path:
-    """Between the default warn of 30 and max of 50, so it only warns."""
+    """Between the default warn of 25 and max of 40, so it only warns."""
     path = tmp_path / "middling.py"
-    path.write_text("def middling():\n" + "    x = 1\n" * 40, encoding="utf-8")
+    path.write_text("def middling():\n" + "    x = 1\n" * 30, encoding="utf-8")
     return path
 
 
@@ -43,7 +43,7 @@ def test_an_error_exits_one_so_a_ci_job_fails(
 
     out = capsys.readouterr().out
     assert code == 1
-    assert f"{long_function}:1:1: DL001 function 'long_one' is 61 lines (max 50)" in out
+    assert f"{long_function}:1:1: DL001 function 'long_one' is 51 lines (max 40)" in out
 
 
 def test_a_warning_is_reported_but_still_exits_zero(
@@ -106,7 +106,7 @@ class TestOutputFormats:
                 "column": 1,
                 "code": "DL001",
                 "level": "error",
-                "message": "function 'long_one' is 61 lines (max 50)",
+                "message": "function 'long_one' is 51 lines (max 40)",
             }
         ]
 
