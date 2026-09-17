@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/Endika/dlen/compare/v0.3.0...v0.3.1) (2026-09-17)
+
+
+### Bug Fixes
+
+* **packaging:** align the PyPI summary with what dlen actually measures ([9a85273](https://github.com/Endika/dlen/commit/9a85273da833d9926daa44516fc758379bfd66ee))
+
 ## [0.3.0](https://github.com/Endika/dlen/compare/v0.2.0...v0.3.0) (2026-09-17)
 
 

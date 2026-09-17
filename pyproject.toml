@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dlen"
-version = "0.3.0"
+version = "0.3.1"
 description = "Check how long your functions and classes are, counting the code you actually read and not your docstrings or blank lines"
 readme = "README.md"
 requires-python = ">=3.10"
