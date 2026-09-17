@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: lint, format and types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - run: uv sync --all-groups --frozen
+      - name: ruff (lint)
+        run: uv run ruff check --output-format=github .
+      - name: ruff (format)
+        run: uv run ruff format --check --diff .
+      - name: mypy (strict)
+        run: uv run mypy
+      - name: dlen on itself
+        run: uv run dlen src tests --output-format=github
+
+  test:
+    name: tests on ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python }}
+      - run: uv sync --all-groups
+      - name: pytest
+        run: uv run pytest --cov --cov-report=term-missing --cov-fail-under=95
+
+  build:
+    name: build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - run: uv build
+      - name: the wheel must actually install and run
+        run: |
+          uv run --isolated --no-project --with dist/*.whl dlen --help
+      - uses: actions/upload-artifact@v7
+        with:
+          name: distributions
+          path: dist/
+
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/dependency-review-action@v5
+        if: github.event_name == 'pull_request'
+        with:
+          fail-on-severity: high
+
+  all-green:
+    name: all-green
+    needs: [quality, test, build, dependency-review]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: every required job must have succeeded
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: exit 1
