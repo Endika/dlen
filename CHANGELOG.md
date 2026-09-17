@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0](https://github.com/Endika/dlen/compare/v0.2.0...v0.3.0) (2026-09-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* stop counting docstrings and blank lines as function length
+
+### Features
+
+* stop counting docstrings and blank lines as function length ([8a701fa](https://github.com/Endika/dlen/commit/8a701fa815635318e86e2d69f4d461c5eb1311f4))
+
 ## [0.2.0](https://github.com/Endika/dlen/compare/v0.1.0...v0.2.0) (2026-09-17)
 
 
