@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/Endika/dlen/compare/v0.3.1...v0.3.2) (2026-09-27)
+
+
+### Documentation
+
+* complete the threshold history and translate a test comment ([18dc0bb](https://github.com/Endika/dlen/commit/18dc0bb1a1dd2c819cf7620b89533dc2579afe50))
+
 ## [0.3.1](https://github.com/Endika/dlen/compare/v0.3.0...v0.3.1) (2026-09-17)
 
 
