@@ -10,7 +10,7 @@ from dlen.core import Code, Level, Limits, check_file, check_paths, check_source
 
 HERE = Path("sample.py")
 
-# Los tests de forma fijan sus umbrales: lo que prueban es la detección, no los defaults.
+# Shape tests pin their own thresholds: they test detection, not the defaults.
 STRICT = Limits(warn_function=12, max_function=20, max_class=500)
 
 
