@@ -50,8 +50,8 @@ the interface.
 
 ### Where the defaults come from
 
-They were measured, not chosen. Over 28,390 functions in the Python standard library,
-numpy, Pillow, rich, pytest, httpx, mypy and coverage, counted the way above:
+They were measured over 28,390 functions in the Python standard library, numpy,
+Pillow, rich, pytest, httpx, mypy and coverage, counted the way above:
 
 | lines | functions flagged |
 | --- | --- |
@@ -75,8 +75,9 @@ If you want the stricter Clean Code reading, it is one flag away:
 dlen src/ --warn-function 12 --max-function 20
 ```
 
-Versions before 0.2.0 shipped 12 and 20. 0.3.0 stopped counting docstrings and blank
-lines, which made every function measure shorter, so the thresholds came down with it.
+Versions before 0.2.0 shipped 12 and 20, and 0.2.0 raised them to 30 and 50. 0.3.0 stopped
+counting docstrings and blank lines, which made every function measure shorter, so the
+thresholds came down with it.
 
 ### Exit codes
 
