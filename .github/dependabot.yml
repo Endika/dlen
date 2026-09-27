@@ -9,9 +9,6 @@ updates:
     commit-message:
       prefix: "chore"
       include: scope
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
     groups:
       python-dev:
         dependency-type: development
@@ -26,9 +23,6 @@ updates:
     commit-message:
       prefix: "ci"
       include: scope
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
     groups:
       actions:
         update-types: [minor, patch]
